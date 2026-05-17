@@ -231,6 +231,16 @@ dd {
   color: #9f321f;
 }
 
+.permission-notice {
+  border: 1px solid #d8c48d;
+  background: #fff7da;
+  color: #6c5013;
+}
+
+.permission-notice p {
+  margin-bottom: 10px;
+}
+
 .filled-notice {
   border: 1px solid #b9d4bd;
   background: #eef8ee;

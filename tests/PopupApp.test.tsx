@@ -6,6 +6,7 @@ import type { BillingProfile, FieldMapping, FieldSnapshot } from "../src/shared/
 
 describe("PopupApp", () => {
   let sendMessage: ReturnType<typeof vi.fn>;
+  let requestPermission: ReturnType<typeof vi.fn>;
 
   const profile: BillingProfile = {
     givenName: "Alex",
@@ -37,9 +38,13 @@ describe("PopupApp", () => {
 
   beforeEach(() => {
     sendMessage = vi.fn();
+    requestPermission = vi.fn();
     globalThis.chrome = {
       runtime: {
         sendMessage
+      },
+      permissions: {
+        request: requestPermission
       }
     } as unknown as typeof chrome;
   });
@@ -58,7 +63,9 @@ describe("PopupApp", () => {
     fireEvent.click(screen.getByRole("button", { name: /identify & fill/i }));
 
     await waitFor(() => {
-      expect(sendMessage).toHaveBeenCalledWith({ type: MESSAGE_TYPES.RUN_AUTOFILL });
+      expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+        type: MESSAGE_TYPES.RUN_AUTOFILL
+      }));
     });
     expect(await screen.findByRole("heading", { name: /preview mapping/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /fill reviewed fields/i })).toBeTruthy();
@@ -107,5 +114,38 @@ describe("PopupApp", () => {
         profileOptionId: "profile-1"
       });
     });
+  });
+
+  it("asks for current site permission and retries autofill", async () => {
+    requestPermission.mockResolvedValue(true);
+    let runCalls = 0;
+
+    sendMessage.mockImplementation((message) => {
+      if (message.type === MESSAGE_TYPES.GET_SETTINGS) {
+        return Promise.resolve({ settings: { savedProfiles: [] } });
+      }
+
+      runCalls += 1;
+      if (runCalls === 1) {
+        return Promise.resolve({
+          code: MESSAGE_TYPES.NEED_HOST_PERMISSION,
+          error: "Bill AutoFill needs permission to access https://shop.example before it can fill this page.",
+          origin: "https://shop.example/*"
+        });
+      }
+
+      return Promise.resolve({ mode: "preview", profile, fields, mappings });
+    });
+
+    render(<PopupApp />);
+    fireEvent.click(screen.getByRole("button", { name: /identify & fill/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: /allow current site & continue/i }));
+
+    await waitFor(() => {
+      expect(requestPermission).toHaveBeenCalledWith({ origins: ["https://shop.example/*"] });
+    });
+    expect(await screen.findByRole("heading", { name: /preview mapping/i })).toBeTruthy();
+    expect(runCalls).toBe(2);
   });
 });

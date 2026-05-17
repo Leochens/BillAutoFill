@@ -14,7 +14,8 @@
     "service_worker": "serviceWorker.js",
     "type": "module"
   },
-  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage", "tabs"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "host_permissions": [
     "https://api.openai.com/*",
     "https://api.deepseek.com/*",

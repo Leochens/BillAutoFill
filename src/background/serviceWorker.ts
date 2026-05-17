@@ -23,6 +23,56 @@ async function ensureContentScript(tabId: number): Promise<void> {
   });
 }
 
+function hostPermissionPattern(url?: string): string | undefined {
+  if (!url) return undefined;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined;
+    return `${parsed.protocol}//${parsed.hostname}/*`;
+  } catch {
+    return undefined;
+  }
+}
+
+async function pagePermissionResponse(tab: chrome.tabs.Tab): Promise<
+  | { allowed: true }
+  | { allowed: false; error: string; origin?: string }
+> {
+  const origin = hostPermissionPattern(tab.url);
+
+  if (!origin) {
+    return {
+      allowed: false,
+      error: "Bill AutoFill can only fill regular http and https pages."
+    };
+  }
+
+  const allowed = await chrome.permissions.contains({ origins: [origin] });
+  if (allowed) return { allowed: true };
+
+  return {
+    allowed: false,
+    origin,
+    error: `Bill AutoFill needs permission to access ${origin.replace("/*", "")} before it can fill this page.`
+  };
+}
+
+function permissionRequiredResponse(error: string, origin?: string): Record<string, unknown> {
+  return {
+    error,
+    code: MESSAGE_TYPES.NEED_HOST_PERMISSION,
+    origin
+  };
+}
+
+function isPageAccessError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("Cannot access contents of the page") ||
+    message.includes("Missing host permission") ||
+    message.includes("The extensions gallery cannot be scripted");
+}
+
 function localMappings(fields: FieldSnapshot[]): FieldMapping[] {
   return fields
     .map((field) => {
@@ -121,7 +171,23 @@ async function handleRuntimeMessage(message: {
   }
 
   const tab = await getActiveTab();
-  await ensureContentScript(tab.id!);
+  const pagePermission = await pagePermissionResponse(tab);
+  if (!pagePermission.allowed) {
+    return permissionRequiredResponse(pagePermission.error, pagePermission.origin);
+  }
+
+  try {
+    await ensureContentScript(tab.id!);
+  } catch (error) {
+    if (isPageAccessError(error)) {
+      return permissionRequiredResponse(
+        "Chrome blocked access to this page. Grant site permission, then try again.",
+        hostPermissionPattern(tab.url)
+      );
+    }
+
+    throw error;
+  }
 
   if (message.type === MESSAGE_TYPES.CONFIRM_FILL) {
     const fill = await chrome.tabs.sendMessage(tab.id!, {

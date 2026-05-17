@@ -6,6 +6,14 @@ type PopupState =
   | { status: "ready" }
   | { status: "loading"; message: string }
   | {
+      status: "permission";
+      message: string;
+      origin: string;
+      action:
+        | { type: "run" }
+        | { type: "confirm"; profile: BillingProfile; mappings: FieldMapping[] };
+    }
+  | {
       status: "preview";
       profile: BillingProfile;
       fields: FieldSnapshot[];
@@ -15,7 +23,9 @@ type PopupState =
   | { status: "error"; message: string };
 
 type AutofillResponse = {
+  code?: string;
   error?: string;
+  origin?: string;
   mode?: "preview" | "filled";
   profile?: BillingProfile;
   fields?: FieldSnapshot[];
@@ -33,6 +43,14 @@ type SettingsResponse = {
 
 function filledCount(response: AutofillResponse): number {
   return response.fillResult?.filled ?? response.filled ?? 0;
+}
+
+function needsHostPermission(response: AutofillResponse): response is AutofillResponse & { origin: string } {
+  return response.code === MESSAGE_TYPES.NEED_HOST_PERMISSION && Boolean(response.origin);
+}
+
+async function requestSitePermission(origin: string): Promise<boolean> {
+  return chrome.permissions.request({ origins: [origin] });
 }
 
 function describeField(field: FieldSnapshot): string {
@@ -71,6 +89,16 @@ export function PopupApp() {
         profileOptionId: selectedProfileId === "random" ? undefined : selectedProfileId
       })) as AutofillResponse;
 
+      if (needsHostPermission(response)) {
+        setState({
+          status: "permission",
+          message: response.error ?? "Site permission is required before filling this page.",
+          origin: response.origin,
+          action: { type: "run" }
+        });
+        return;
+      }
+
       if (response.error) {
         setState({ status: "error", message: response.error });
         return;
@@ -95,7 +123,10 @@ export function PopupApp() {
   async function confirmFill() {
     if (state.status !== "preview") return;
 
-    const { profile, mappings } = state;
+    await fillReviewedFields(state.profile, state.mappings);
+  }
+
+  async function fillReviewedFields(profile: BillingProfile, mappings: FieldMapping[]) {
     setState({ status: "loading", message: "Filling reviewed fields..." });
 
     try {
@@ -105,12 +136,46 @@ export function PopupApp() {
         mappings
       })) as AutofillResponse;
 
+      if (needsHostPermission(response)) {
+        setState({
+          status: "permission",
+          message: response.error ?? "Site permission is required before filling this page.",
+          origin: response.origin,
+          action: { type: "confirm", profile, mappings }
+        });
+        return;
+      }
+
       if (response.error) {
         setState({ status: "error", message: response.error });
         return;
       }
 
       setState({ status: "filled", filled: filledCount(response) });
+    } catch (error) {
+      setState({ status: "error", message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  async function continueAfterPermission() {
+    if (state.status !== "permission") return;
+
+    const { origin, action } = state;
+    setState({ status: "loading", message: "Requesting site permission..." });
+
+    try {
+      const granted = await requestSitePermission(origin);
+      if (!granted) {
+        setState({ status: "error", message: "Site permission was not granted." });
+        return;
+      }
+
+      if (action.type === "run") {
+        await runAutofill();
+        return;
+      }
+
+      await fillReviewedFields(action.profile, action.mappings);
     } catch (error) {
       setState({ status: "error", message: error instanceof Error ? error.message : String(error) });
     }
@@ -153,6 +218,15 @@ export function PopupApp() {
       </section>
 
       {state.status === "loading" ? <p className="notice loading-notice">{state.message}</p> : null}
+
+      {state.status === "permission" ? (
+        <section className="notice permission-notice">
+          <p>{state.message}</p>
+          <button type="button" className="secondary-action" onClick={continueAfterPermission}>
+            Allow current site & continue
+          </button>
+        </section>
+      ) : null}
 
       {state.status === "error" ? <p className="notice error-notice">{state.message}</p> : null}
 

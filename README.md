@@ -15,4 +15,4 @@ Load `dist/` as an unpacked extension in Chrome.
 
 ## Manual Test
 
-Open `docs/manual-test-form.html` in Chrome, click the extension icon, then run `Identify & Fill` from the side panel. The side panel stays open while you interact with the page. New domains show a preview before filling unless the exact host is listed as trusted and one-click trusted fill is enabled.
+Open an `http` or `https` test form in Chrome, click the extension icon, then run `Identify & Fill` from the side panel. The side panel stays open while you interact with the page. The first fill on a site asks for that site's permission, then retries the autofill flow. New domains show a preview before filling unless the exact host is listed as trusted and one-click trusted fill is enabled.

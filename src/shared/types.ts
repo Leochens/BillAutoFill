@@ -51,3 +51,32 @@ export interface CountryDefinition {
   addressOrder: AddressField[];
   regions: CountryRegion[];
 }
+
+export type FieldKind =
+  | "givenName"
+  | "familyName"
+  | "fullName"
+  | "streetLine1"
+  | "city"
+  | "region"
+  | "postalCode"
+  | "country"
+  | "phone"
+  | "email"
+  | "company"
+  | "gender"
+  | "unknown";
+
+export interface FieldSnapshot {
+  fieldId: string;
+  tagName: string;
+  inputType?: string;
+  autocomplete?: string;
+  name?: string;
+  id?: string;
+  label?: string;
+  placeholder?: string;
+  ariaLabel?: string;
+  nearbyText?: string;
+  options?: string[];
+}

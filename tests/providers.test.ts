@@ -21,4 +21,32 @@ describe("buildProviderRequest", () => {
     expect(JSON.stringify(request.body)).toContain("Return strict JSON");
     expect(JSON.stringify(request.body)).not.toContain("do-not-send");
   });
+
+  it("normalizes custom provider base URLs before appending chat completions", () => {
+    const request = buildProviderRequest(
+      {
+        provider: "custom",
+        apiKey: "key",
+        model: "model",
+        baseUrl: " https://proxy.example.com/// ",
+      },
+      [],
+    );
+
+    expect(request.url).toBe("https://proxy.example.com/chat/completions");
+  });
+
+  it("throws a clear error when custom provider base URL is missing", () => {
+    expect(() =>
+      buildProviderRequest(
+        {
+          provider: "custom",
+          apiKey: "key",
+          model: "model",
+          baseUrl: "   ",
+        },
+        [],
+      ),
+    ).toThrow("Custom provider base URL is required");
+  });
 });

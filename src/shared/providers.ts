@@ -39,8 +39,13 @@ export function providerUrl(settings: ProviderSettings): string {
       return "https://api.deepseek.com/chat/completions";
     case "gemini":
       return `https://generativelanguage.googleapis.com/v1beta/models/${settings.model}:generateContent`;
-    case "custom":
-      return `${settings.baseUrl?.replace(/\/$/, "") ?? ""}/chat/completions`;
+    case "custom": {
+      const baseUrl = settings.baseUrl?.trim().replace(/\/+$/, "");
+      if (!baseUrl) {
+        throw new Error("Custom provider base URL is required");
+      }
+      return `${baseUrl}/chat/completions`;
+    }
   }
 }
 

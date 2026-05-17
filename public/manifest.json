@@ -4,15 +4,17 @@
   "description": "Generate fictional billing profiles and fill test forms with reviewable AI-assisted mappings.",
   "version": "0.1.0",
   "action": {
-    "default_title": "Bill AutoFill",
-    "default_popup": "index.html"
+    "default_title": "Bill AutoFill"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "options_page": "options.html",
   "background": {
     "service_worker": "serviceWorker.js",
     "type": "module"
   },
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
   "host_permissions": [
     "https://api.openai.com/*",
     "https://api.deepseek.com/*",

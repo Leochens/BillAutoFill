@@ -16,6 +16,7 @@ const config = {
     rollupOptions: {
       input: {
         popup: resolve(__dirname, "index.html"),
+        sidepanel: resolve(__dirname, "sidepanel.html"),
         options: resolve(__dirname, "options.html"),
         serviceWorker: resolve(__dirname, "src/background/serviceWorker.ts"),
         contentScript: resolve(__dirname, "src/content/contentScript.ts")

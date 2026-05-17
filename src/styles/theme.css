@@ -41,7 +41,7 @@ textarea {
 }
 
 .popup-shell {
-  width: 380px;
+  width: min(420px, 100vw);
   min-height: 100vh;
   padding: 16px;
 }

@@ -13,6 +13,7 @@ import type {
 
 chrome.runtime.onInstalled.addListener(() => {
   console.info("Bill AutoFill installed");
+  void chrome.sidePanel?.setPanelBehavior({ openPanelOnActionClick: true });
 });
 
 async function ensureContentScript(tabId: number): Promise<void> {

@@ -29,7 +29,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -48,6 +49,10 @@ select {
 .options-shell {
   max-width: 1040px;
   margin: 0 auto;
+}
+
+.options-intro {
+  margin: 6px 0 0;
 }
 
 .app-header {
@@ -284,11 +289,26 @@ label {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 11px;
   background: #ffffff;
   color: #17211f;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-label input {
+  width: auto;
 }

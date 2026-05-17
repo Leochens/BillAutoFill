@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bill AutoFill Manual Test Form</title>
+    <style>
+      body {
+        max-width: 720px;
+        margin: 32px auto;
+        padding: 0 20px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-weight: 700;
+      }
+
+      input,
+      select {
+        min-height: 38px;
+        padding: 8px 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Manual Test Billing Form</h1>
+    <form>
+      <label>First name <input name="first_name" autocomplete="given-name" /></label>
+      <label>Last name <input name="last_name" autocomplete="family-name" /></label>
+      <label>Street address <input name="address1" autocomplete="address-line1" /></label>
+      <label>City <input name="city" autocomplete="address-level2" /></label>
+      <label>State or region <input name="state" autocomplete="address-level1" /></label>
+      <label>Postal code <input name="postal" autocomplete="postal-code" /></label>
+      <label>Country <input name="country" autocomplete="country-name" /></label>
+      <label>Phone <input name="phone" autocomplete="tel" /></label>
+      <label>Email <input name="email" autocomplete="email" /></label>
+      <label>Card number <input name="card" autocomplete="cc-number" /></label>
+      <button type="button">No submit action</button>
+    </form>
+  </body>
+</html>

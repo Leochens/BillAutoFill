@@ -29,6 +29,7 @@ export function extractFieldsFromDocument(doc: Document): FieldSnapshot[] {
 
 function isSafeVisibleField(control: FieldControl): boolean {
   if (!isVisible(control)) return false;
+  if (isDisabled(control)) return false;
 
   const inputType = getInputType(control);
   if (inputType && BLOCKED_INPUT_TYPES.has(inputType)) return false;
@@ -37,6 +38,10 @@ function isSafeVisibleField(control: FieldControl): boolean {
   if (autocomplete && hasSensitiveAutocomplete(autocomplete)) return false;
 
   return true;
+}
+
+function isDisabled(control: FieldControl): boolean {
+  return control.disabled || control.getAttribute("aria-disabled") === "true";
 }
 
 function toFieldSnapshot(control: FieldControl, index: number): FieldSnapshot {

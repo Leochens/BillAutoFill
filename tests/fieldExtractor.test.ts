@@ -106,4 +106,25 @@ describe("extractFieldsFromDocument", () => {
 
     expect(fields.map((field) => field.id)).toEqual(["visible"]);
   });
+
+  it("excludes disabled fields so field ids stay aligned with fillable controls", () => {
+    document.body.innerHTML = `
+      <form>
+        <label for="disabled-first">Disabled first</label>
+        <input id="disabled-first" disabled />
+        <label for="aria-disabled-first">Aria disabled first</label>
+        <input id="aria-disabled-first" aria-disabled="true" />
+        <label for="first">First name</label>
+        <input id="first" name="firstName" />
+      </form>
+    `;
+
+    const fields = extractFieldsFromDocument(document);
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]).toMatchObject({
+      fieldId: "field-0",
+      id: "first"
+    });
+  });
 });

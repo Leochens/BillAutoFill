@@ -1,5 +1,4 @@
 import { extractFieldsFromDocument } from "../shared/fieldExtractor";
-import { MESSAGE_TYPES } from "../shared/messages";
 import type { BillingProfile, FieldKind, FieldMapping, FieldSnapshot } from "../shared/types";
 
 type FieldControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
@@ -26,6 +25,11 @@ const SENSITIVE_AUTOCOMPLETE_VALUES = new Set([
   "current-password",
   "new-password"
 ]);
+
+const MESSAGE_TYPES = {
+  ANALYZE_PAGE: "billAutofill/analyzePage",
+  FILL_PAGE: "billAutofill/fillPage"
+} as const;
 
 export function fillDocumentFields(
   doc: Document,
@@ -56,10 +60,10 @@ function getFillableControlsByFieldId(doc: Document): Map<string, FieldControl> 
   const usedControls = new Set<FieldControl>();
   const controlsByFieldId = new Map<string, FieldControl>();
 
-  fields.forEach((field, index) => {
+  fields.forEach((field) => {
     if (isSensitiveFieldSnapshot(field)) return;
 
-    const matchedControl = findMatchingControl(field, controls, usedControls) ?? controls[index];
+    const matchedControl = findMatchingControl(field, controls, usedControls);
 
     if (matchedControl && !usedControls.has(matchedControl)) {
       usedControls.add(matchedControl);

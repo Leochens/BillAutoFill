@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   preferTaxExemptState: false,
   trustedDomains: [],
   fillMode: "preview",
+  savedProfiles: [],
 };
 
 export function normalizeSettings(
@@ -28,6 +29,9 @@ export function normalizeSettings(
     trustedDomains: value?.trustedDomains
       ? [...value.trustedDomains]
       : [...DEFAULT_SETTINGS.trustedDomains],
+    savedProfiles: value?.savedProfiles
+      ? [...value.savedProfiles]
+      : [...DEFAULT_SETTINGS.savedProfiles],
   };
 }
 

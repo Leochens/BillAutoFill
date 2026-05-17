@@ -76,4 +76,28 @@ describe("fillDocumentFields", () => {
     expect(correctResult.filled).toBe(1);
     expect(document.querySelector<HTMLInputElement>("#first")?.value).toBe("Alex");
   });
+
+  it("selects matching options for country and region selectors", () => {
+    document.body.innerHTML = `
+      <label for="country">Country</label>
+      <select id="country" name="country">
+        <option value="">Choose</option>
+        <option value="US">United States</option>
+      </select>
+      <label for="state">State</label>
+      <select id="state" name="state">
+        <option value="">Choose</option>
+        <option value="OR">Oregon</option>
+      </select>
+    `;
+
+    const result = fillDocumentFields(document, [
+      { fieldId: "field-0", target: "country", confidence: 1 },
+      { fieldId: "field-1", target: "region", confidence: 1 }
+    ], profile);
+
+    expect(result.filled).toBe(2);
+    expect(document.querySelector<HTMLSelectElement>("#country")?.value).toBe("US");
+    expect(document.querySelector<HTMLSelectElement>("#state")?.value).toBe("OR");
+  });
 });

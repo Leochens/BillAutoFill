@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { COUNTRY_DEFINITIONS } from "../shared/countries";
+import { MESSAGE_TYPES } from "../shared/messages";
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, saveSettings } from "../shared/storage";
 import type { CountryCode, ExtensionSettings, GenderPreference, ProviderKind } from "../shared/types";
 
@@ -56,6 +57,23 @@ export function OptionsApp() {
     }
 
     setStatus(`Ready to test ${settings.provider.provider} with the current unsaved settings.`);
+  }
+
+  async function generateAddressOptions() {
+    setStatus("Generating address options...");
+    const response = await chrome.runtime.sendMessage({
+      type: MESSAGE_TYPES.GENERATE_PROFILE_OPTIONS,
+      settings,
+      count: 4
+    });
+
+    if (response?.error) {
+      setStatus(response.error);
+      return;
+    }
+
+    setSettings(response.settings);
+    setStatus(`Generated ${response.profiles?.length ?? 0} address options.`);
   }
 
   return (
@@ -181,6 +199,26 @@ export function OptionsApp() {
               }
             />
           </label>
+        </div>
+
+        <div className="panel">
+          <h2>Address options</h2>
+          <p className="muted">
+            Use AI to pre-generate reusable fictional addresses, then choose one from the popup when filling a form.
+          </p>
+          <button type="button" className="secondary-action" onClick={generateAddressOptions}>
+            Generate address options
+          </button>
+          {settings.savedProfiles.length > 0 ? (
+            <ul className="saved-profile-list">
+              {settings.savedProfiles.map((profile) => (
+                <li key={profile.id}>
+                  <span>{profile.label}</span>
+                  <small>{profile.source === "ai" ? "AI" : "Local fallback"}</small>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
 
         <div className="panel">

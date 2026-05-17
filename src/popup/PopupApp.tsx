@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MESSAGE_TYPES } from "../shared/messages";
-import type { BillingProfile, FieldMapping, FieldSnapshot } from "../shared/types";
+import type { BillingProfile, FieldMapping, FieldSnapshot, GeneratedProfileOption } from "../shared/types";
 
 type PopupState =
   | { status: "ready" }
@@ -24,6 +24,13 @@ type AutofillResponse = {
   filled?: number;
 };
 
+type SettingsResponse = {
+  settings?: {
+    savedProfiles?: GeneratedProfileOption[];
+    selectedProfileId?: string;
+  };
+};
+
 function filledCount(response: AutofillResponse): number {
   return response.fillResult?.filled ?? response.filled ?? 0;
 }
@@ -38,14 +45,30 @@ function fieldForMapping(fields: FieldSnapshot[], mapping: FieldMapping): FieldS
 
 export function PopupApp() {
   const [state, setState] = useState<PopupState>({ status: "ready" });
+  const [savedProfiles, setSavedProfiles] = useState<GeneratedProfileOption[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState("random");
   const loading = state.status === "loading";
+
+  useEffect(() => {
+    void Promise.resolve(chrome.runtime.sendMessage({ type: MESSAGE_TYPES.GET_SETTINGS }))
+      .then((response: SettingsResponse) => {
+        if (!response?.settings) return;
+        const profiles = response.settings?.savedProfiles ?? [];
+        setSavedProfiles(profiles);
+        setSelectedProfileId(response.settings?.selectedProfileId ?? "random");
+      })
+      .catch(() => {
+        // Settings are optional for the popup; keep random fill available on failures.
+      });
+  }, []);
 
   async function runAutofill() {
     setState({ status: "loading", message: "Identifying billing fields..." });
 
     try {
       const response = (await chrome.runtime.sendMessage({
-        type: MESSAGE_TYPES.RUN_AUTOFILL
+        type: MESSAGE_TYPES.RUN_AUTOFILL,
+        profileOptionId: selectedProfileId === "random" ? undefined : selectedProfileId
       })) as AutofillResponse;
 
       if (response.error) {
@@ -108,6 +131,22 @@ export function PopupApp() {
         <p className="muted">
           Identify visible billing fields, generate a fictional profile, and review mappings before filling.
         </p>
+        {savedProfiles.length > 0 ? (
+          <label className="compact-label">
+            Fill profile
+            <select
+              value={selectedProfileId}
+              onChange={(event) => setSelectedProfileId(event.target.value)}
+            >
+              <option value="random">Random address</option>
+              {savedProfiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>
+                  {profile.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         <button type="button" className="primary-action" disabled={loading} onClick={runAutofill}>
           Identify & Fill
         </button>

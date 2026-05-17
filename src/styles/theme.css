@@ -288,6 +288,10 @@ label {
   font-weight: 700;
 }
 
+.compact-label {
+  margin: 12px 0;
+}
+
 input,
 select,
 textarea {
@@ -311,4 +315,36 @@ textarea {
 
 .checkbox-label input {
   width: auto;
+}
+
+.saved-profile-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-profile-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: var(--surface-strong);
+}
+
+.saved-profile-list span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-profile-list small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-weight: 700;
 }

@@ -165,9 +165,16 @@ function isSensitiveFieldSnapshot(field: FieldSnapshot): boolean {
 
 function setControlValue(control: FieldControl, value: string): void {
   if (control instanceof HTMLSelectElement) {
-    const matchingOption = Array.from(control.options).find(
-      (option) => option.value === value || option.textContent?.trim() === value
-    );
+    const normalizedValue = normalizeComparable(value);
+    const matchingOption = Array.from(control.options).find((option) => {
+      const optionValue = normalizeComparable(option.value);
+      const optionText = normalizeComparable(option.textContent);
+
+      return optionValue === normalizedValue ||
+        optionText === normalizedValue ||
+        optionText.includes(normalizedValue) ||
+        normalizedValue.includes(optionText);
+    });
 
     control.value = matchingOption?.value ?? value;
   } else {
@@ -181,6 +188,10 @@ function setControlValue(control: FieldControl, value: string): void {
 function normalizeText(value: string | null | undefined): string | undefined {
   const normalized = value?.replace(/\s+/g, " ").trim();
   return normalized ? normalized : undefined;
+}
+
+function normalizeComparable(value: string | null | undefined): string {
+  return value?.replace(/\s+/g, " ").trim().toLowerCase() ?? "";
 }
 
 if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {

@@ -1,4 +1,5 @@
-import type { FieldSnapshot, ProviderSettings } from "./types";
+import { COUNTRY_DEFINITIONS } from "./countries";
+import type { FieldSnapshot, ProfilePreferences, ProviderSettings } from "./types";
 
 type ProviderBody =
   | {
@@ -92,6 +93,60 @@ export function buildProviderRequest(
         { role: "user", content: prompt },
       ],
       temperature: 0.1,
+    },
+  };
+}
+
+export function buildProfileOptionsRequest(
+  settings: ProviderSettings,
+  preferences: ProfilePreferences,
+  count: number
+): ProviderRequest {
+  const country = COUNTRY_DEFINITIONS[preferences.countryCode];
+  const prompt = [
+    `Generate ${count} fictional billing profiles for form testing.`,
+    "Return strict JSON only.",
+    "Use this shape: {\"profiles\":[{\"givenName\":\"...\",\"familyName\":\"...\",\"streetLine1\":\"...\",\"city\":\"...\",\"region\":\"...\",\"regionCode\":\"...\",\"postalCode\":\"...\",\"country\":\"...\",\"countryCode\":\"...\",\"phone\":\"...\",\"email\":\"...\",\"company\":\"...\",\"gender\":\"male|female|neutral\"}]}",
+    "Do not use real people. Use example.test emails. Do not include payment, bank, government ID, password, or tax advice.",
+    `Country: ${country.name} (${country.code}). Region label: ${country.regionLabel}. Postal label: ${country.postalLabel}. Phone prefix: ${country.phonePrefix}.`,
+    `Gender preference: ${preferences.gender}.`,
+    preferences.countryCode === "US" && preferences.preferTaxExemptState
+      ? "For United States, choose only fictional addresses in AK, DE, MT, NH, or OR."
+      : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  if (settings.provider === "gemini") {
+    return {
+      url: providerUrl(settings),
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": settings.apiKey,
+      },
+      body: {
+        contents: [{ parts: [{ text: prompt }] }],
+      },
+    };
+  }
+
+  return {
+    url: providerUrl(settings),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${settings.apiKey}`,
+    },
+    body: {
+      model: settings.model,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You generate fictional billing profiles for test-form autofill. Return strict JSON only.",
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.8,
     },
   };
 }

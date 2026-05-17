@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildProviderRequest } from "../src/shared/providers";
+import { buildProfileOptionsRequest, buildProviderRequest } from "../src/shared/providers";
 import type { FieldSnapshot } from "../src/shared/types";
 
 describe("buildProviderRequest", () => {
@@ -48,5 +48,17 @@ describe("buildProviderRequest", () => {
         [],
       ),
     ).toThrow("Custom provider base URL is required");
+  });
+
+  it("builds a fictional profile options request", () => {
+    const request = buildProfileOptionsRequest(
+      { provider: "openai", apiKey: "sk-test", model: "gpt-4.1-mini" },
+      { countryCode: "US", gender: "neutral", preferTaxExemptState: true },
+      4
+    );
+
+    expect(JSON.stringify(request.body)).toContain("Generate 4 fictional billing profiles");
+    expect(JSON.stringify(request.body)).toContain("Return strict JSON");
+    expect(JSON.stringify(request.body)).toContain("AK, DE, MT, NH, or OR");
   });
 });

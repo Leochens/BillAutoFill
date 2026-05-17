@@ -7,12 +7,49 @@ describe("OptionsApp", () => {
   const get = vi.fn();
   const set = vi.fn();
   const remove = vi.fn();
+  const sendMessage = vi.fn();
 
   beforeEach(() => {
     get.mockResolvedValue({});
     set.mockResolvedValue(undefined);
     remove.mockResolvedValue(undefined);
+    sendMessage.mockResolvedValue({
+      settings: {
+        provider: { provider: "openai", apiKey: "", model: "gpt-4.1-mini" },
+        countryCode: "US",
+        gender: "any",
+        preferTaxExemptState: false,
+        trustedDomains: [],
+        fillMode: "preview",
+        savedProfiles: [
+          {
+            id: "profile-1",
+            label: "Alex Bennett - Portland, OR",
+            createdAt: "2026-05-17T00:00:00.000Z",
+            source: "ai",
+            profile: {
+              givenName: "Alex",
+              familyName: "Bennett",
+              gender: "neutral",
+              streetLine1: "123 Maple Street",
+              city: "Portland",
+              region: "Oregon",
+              regionCode: "OR",
+              postalCode: "97201",
+              country: "United States",
+              countryCode: "US",
+              phone: "+1 555 123 4567",
+              email: "alex.bennett@example.test"
+            }
+          }
+        ]
+      },
+      profiles: [{ id: "profile-1" }]
+    });
     globalThis.chrome = {
+      runtime: {
+        sendMessage
+      },
       storage: {
         local: {
           get,
@@ -60,5 +97,19 @@ describe("OptionsApp", () => {
     await waitFor(() => {
       expect(remove).toHaveBeenCalledWith(SETTINGS_KEY);
     });
+  });
+
+  it("generates address options through the extension runtime", async () => {
+    render(<OptionsApp />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /generate address options/i }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+        type: "billAutofill/generateProfileOptions",
+        count: 4
+      }));
+    });
+    expect(await screen.findByText(/Alex Bennett - Portland, OR/i)).toBeTruthy();
   });
 });

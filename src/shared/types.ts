@@ -35,6 +35,14 @@ export interface BillingProfile {
   company?: string;
 }
 
+export interface GeneratedProfileOption {
+  id: string;
+  label: string;
+  profile: BillingProfile;
+  createdAt: string;
+  source: "ai" | "local";
+}
+
 export interface CountryRegion {
   code: string;
   name: string;
@@ -109,4 +117,6 @@ export interface ExtensionSettings {
   preferTaxExemptState: boolean;
   trustedDomains: string[];
   fillMode: "preview" | "oneClickTrusted";
+  savedProfiles: GeneratedProfileOption[];
+  selectedProfileId?: string;
 }

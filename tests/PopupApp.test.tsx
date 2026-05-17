@@ -73,4 +73,39 @@ describe("PopupApp", () => {
 
     expect(await screen.findByText(/filled 2 fields\. the form was not submitted\./i)).toBeTruthy();
   });
+
+  it("lets users choose a pre-generated profile before filling", async () => {
+    sendMessage.mockImplementation((message) => {
+      if (message.type === MESSAGE_TYPES.GET_SETTINGS) {
+        return Promise.resolve({
+          settings: {
+            savedProfiles: [
+              {
+                id: "profile-1",
+                label: "Alex Bennett - Portland, OR",
+                profile,
+                createdAt: "2026-05-17T00:00:00.000Z",
+                source: "ai"
+              }
+            ],
+            selectedProfileId: "profile-1"
+          }
+        });
+      }
+
+      return Promise.resolve({ mode: "preview", profile, fields, mappings });
+    });
+
+    render(<PopupApp />);
+
+    expect(await screen.findByLabelText(/fill profile/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /identify & fill/i }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith({
+        type: MESSAGE_TYPES.RUN_AUTOFILL,
+        profileOptionId: "profile-1"
+      });
+    });
+  });
 });

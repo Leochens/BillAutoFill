@@ -96,6 +96,11 @@ export interface FieldMapping {
   note?: string;
 }
 
+export interface AutofillTraceStep {
+  title: string;
+  detail: string;
+}
+
 export interface MappingValidationResult {
   validMappings: FieldMapping[];
   rejectedMappings: Array<Partial<FieldMapping> & { reason: string }>;

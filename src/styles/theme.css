@@ -254,6 +254,54 @@ dd {
   line-height: 1.35;
 }
 
+.profile-detail-list,
+.process-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 10px 0 12px;
+  padding: 10px;
+  background: var(--surface-strong);
+}
+
+.profile-detail-list {
+  display: grid;
+  gap: 8px;
+}
+
+.profile-detail-list div,
+.process-panel li {
+  display: grid;
+  gap: 3px;
+}
+
+.profile-detail-list dt,
+.process-panel strong {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.profile-detail-list dd,
+.process-panel span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #17211f;
+  font-size: 0.86rem;
+}
+
+.process-panel summary {
+  cursor: pointer;
+  color: var(--primary);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.process-panel ol {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
 .mapping-list {
   display: grid;
   gap: 8px;
@@ -276,6 +324,7 @@ dd {
 }
 
 .mapping-list span {
+  display: block;
   min-width: 0;
   overflow: hidden;
   color: #17211f;
@@ -284,9 +333,25 @@ dd {
   white-space: nowrap;
 }
 
+.mapping-list small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
 .mapping-list strong {
   color: var(--primary);
   font-size: 0.78rem;
+}
+
+.inline-error {
+  margin: -4px 0 10px;
+  color: #9f321f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 label {

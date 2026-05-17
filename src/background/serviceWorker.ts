@@ -4,6 +4,7 @@ import { loadSettings, saveSettings } from "../shared/storage";
 import { MESSAGE_TYPES } from "../shared/messages";
 import { validateFieldMappings } from "../shared/mappingValidator";
 import type {
+  AutofillTraceStep,
   BillingProfile,
   ExtensionSettings,
   FieldMapping,
@@ -75,7 +76,7 @@ function isPageAccessError(error: unknown): boolean {
 
 function localMappings(fields: FieldSnapshot[]): FieldMapping[] {
   return fields
-    .map((field) => {
+    .map((field): FieldMapping | undefined => {
       const metadataText = [
         field.autocomplete,
         field.name,
@@ -95,7 +96,10 @@ function localMappings(fields: FieldSnapshot[]): FieldMapping[] {
         ? {
             fieldId: field.fieldId,
             target,
-            confidence: field.autocomplete ? 0.8 : 0.75
+            confidence: field.autocomplete ? 0.8 : 0.75,
+            note: field.autocomplete
+              ? `Matched autocomplete="${field.autocomplete}".`
+              : "Matched visible field metadata."
           }
         : undefined;
     })
@@ -129,6 +133,26 @@ function exactHost(url?: string): string | undefined {
   }
 }
 
+function selectedProfileLabel(settings: ExtensionSettings, profileOptionId?: string): string {
+  if (profileOptionId === "override") {
+    return "Using a pasted profile from the side panel.";
+  }
+
+  if (profileOptionId === "random") {
+    return `Generated a fresh fictional profile for ${settings.countryCode} with gender preference ${settings.gender}.`;
+  }
+
+  const selected = profileOptionId
+    ? settings.savedProfiles.find((profile) => profile.id === profileOptionId)
+    : settings.selectedProfileId
+      ? settings.savedProfiles.find((profile) => profile.id === settings.selectedProfileId)
+      : undefined;
+
+  return selected
+    ? `Using pre-generated ${selected.source === "ai" ? "AI" : "local"} profile: ${selected.label}.`
+    : `Generated a fresh fictional profile for ${settings.countryCode} with gender preference ${settings.gender}.`;
+}
+
 async function getActiveTab(): Promise<chrome.tabs.Tab> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) throw new Error("No active tab available");
@@ -157,6 +181,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 async function handleRuntimeMessage(message: {
   type: string;
   profile?: unknown;
+  profileOverride?: BillingProfile;
   profileOptionId?: string;
   mappings?: FieldMapping[];
   settings?: ExtensionSettings;
@@ -200,12 +225,26 @@ async function handleRuntimeMessage(message: {
   }
 
   const settings = await loadSettings();
-  const profile = selectProfile(settings, message.profileOptionId);
+  const profile = message.profileOverride ?? selectProfile(settings, message.profileOptionId);
   const analysis = await chrome.tabs.sendMessage(tab.id!, {
     type: MESSAGE_TYPES.ANALYZE_PAGE
   });
   const fields = (analysis.fields ?? []) as FieldSnapshot[];
-  const mappings = await mapFields(settings, fields);
+  const trace: AutofillTraceStep[] = [
+    {
+      title: "Page scanned",
+      detail: `Detected ${fields.length} eligible fields from inputs, textareas, and selectors.`
+    },
+    {
+      title: "Profile prepared",
+      detail: message.profileOverride
+        ? selectedProfileLabel(settings, "override")
+        : selectedProfileLabel(settings, message.profileOptionId)
+    }
+  ];
+  const mapped = await mapFields(settings, fields);
+  const mappings = mapped.mappings;
+  trace.push(...mapped.trace);
   const host = exactHost(tab.url);
   const trusted = host ? settings.trustedDomains.includes(host) : false;
 
@@ -216,15 +255,27 @@ async function handleRuntimeMessage(message: {
       mappings
     });
 
-    return { mode: "filled", fillResult: fill.result };
+    return {
+      mode: "filled",
+      fillResult: fill.result,
+      trace: [
+        ...trace,
+        {
+          title: "Trusted fill completed",
+          detail: `Filled ${fill.result?.filled ?? 0} fields on trusted host ${host}. The form was not submitted.`
+        }
+      ]
+    };
   }
 
-  return { profile, fields, mappings, mode: "preview" };
+  return { profile, fields, mappings, mode: "preview", trace };
 }
 
 function selectProfile(settings: ExtensionSettings, profileOptionId?: string): BillingProfile {
   const selected = profileOptionId
-    ? settings.savedProfiles.find((profile) => profile.id === profileOptionId)
+    ? profileOptionId === "random"
+      ? undefined
+      : settings.savedProfiles.find((profile) => profile.id === profileOptionId)
     : settings.selectedProfileId
       ? settings.savedProfiles.find((profile) => profile.id === settings.selectedProfileId)
       : undefined;
@@ -236,8 +287,22 @@ function selectProfile(settings: ExtensionSettings, profileOptionId?: string): B
   });
 }
 
-async function mapFields(settings: ExtensionSettings, fields: FieldSnapshot[]): Promise<FieldMapping[]> {
-  if (!settings.provider.apiKey.trim()) return localMappings(fields);
+async function mapFields(
+  settings: ExtensionSettings,
+  fields: FieldSnapshot[]
+): Promise<{ mappings: FieldMapping[]; trace: AutofillTraceStep[] }> {
+  if (!settings.provider.apiKey.trim()) {
+    const mappings = localMappings(fields);
+    return {
+      mappings,
+      trace: [
+        {
+          title: "Local mapping used",
+          detail: `No AI API key is configured, so local field rules mapped ${mappings.length} fields.`
+        }
+      ]
+    };
+  }
 
   try {
     const request = buildProviderRequest(settings.provider, fields);
@@ -250,10 +315,40 @@ async function mapFields(settings: ExtensionSettings, fields: FieldSnapshot[]): 
     const payload = await response.json();
     const mappings = parseMappingsFromProviderPayload(payload);
     const validated = validateFieldMappings(fields, mappings);
-    return validated.validMappings.length > 0 ? validated.validMappings : localMappings(fields);
+    if (validated.validMappings.length > 0) {
+      return {
+        mappings: validated.validMappings,
+        trace: [
+          {
+            title: "AI mapping completed",
+            detail: `${settings.provider.provider} ${settings.provider.model} proposed ${mappings.length} mappings; ${validated.validMappings.length} passed validation.`
+          }
+        ]
+      };
+    }
+
+    const fallbackMappings = localMappings(fields);
+    return {
+      mappings: fallbackMappings,
+      trace: [
+        {
+          title: "AI mapping fallback",
+          detail: `AI returned no valid mappings, so local rules mapped ${fallbackMappings.length} fields.`
+        }
+      ]
+    };
   } catch (error) {
     console.warn("Bill AutoFill AI mapping fallback:", error);
-    return localMappings(fields);
+    const fallbackMappings = localMappings(fields);
+    return {
+      mappings: fallbackMappings,
+      trace: [
+        {
+          title: "AI mapping fallback",
+          detail: `Provider mapping failed, so local rules mapped ${fallbackMappings.length} fields.`
+        }
+      ]
+    };
   }
 }
 

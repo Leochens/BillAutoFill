@@ -58,7 +58,9 @@ export function buildProviderRequest(
   const prompt = [
     "Classify billing form fields for fictional test-data autofill.",
     "Return strict JSON only.",
+    "Use this shape: {\"mappings\":[{\"fieldId\":\"...\",\"target\":\"givenName|familyName|fullName|streetLine1|city|region|postalCode|country|phone|email|company|gender|unknown\",\"confidence\":0.0,\"note\":\"short observable reason\"}]}",
     "Never submit forms.",
+    "Do not include hidden chain-of-thought. Use only short observable reasons based on labels, names, autocomplete, nearby text, or select options.",
     "Use only these safe field metadata snapshots:",
     JSON.stringify(safeFields),
   ].join("\n");
@@ -88,7 +90,7 @@ export function buildProviderRequest(
         {
           role: "system",
           content:
-            "You classify billing form fields for fictional test-data autofill. Return strict JSON only and never submit forms.",
+            "You classify billing form fields for fictional test-data autofill. Return strict JSON only, include short observable reasons, and never submit forms.",
         },
         { role: "user", content: prompt },
       ],

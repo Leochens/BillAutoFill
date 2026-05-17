@@ -102,7 +102,7 @@ describe("OptionsApp", () => {
   it("generates address options through the extension runtime", async () => {
     render(<OptionsApp />);
 
-    fireEvent.click(await screen.findByRole("button", { name: /generate address options/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /generate with ai/i }));
 
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({
@@ -111,5 +111,27 @@ describe("OptionsApp", () => {
       }));
     });
     expect(await screen.findByText(/Alex Bennett - Portland, OR/i)).toBeTruthy();
+  });
+
+  it("adds a manual profile from pasted JSON", async () => {
+    render(<OptionsApp />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /add manual profile/i }));
+
+    expect(await screen.findByText(/manual profile added/i)).toBeTruthy();
+    expect(screen.getByText(/Alex Bennett - Portland, OR/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(set).toHaveBeenCalledWith({
+        [SETTINGS_KEY]: expect.objectContaining({
+          selectedProfileId: expect.stringMatching(/^manual-/),
+          savedProfiles: expect.arrayContaining([
+            expect.objectContaining({
+              label: "Alex Bennett - Portland, OR",
+              source: "local"
+            })
+          ])
+        })
+      });
+    });
   });
 });

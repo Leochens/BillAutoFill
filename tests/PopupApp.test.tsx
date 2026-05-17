@@ -106,12 +106,36 @@ describe("PopupApp", () => {
     render(<PopupApp />);
 
     expect(await screen.findByLabelText(/fill profile/i)).toBeTruthy();
+    expect(await screen.findByText(/123 maple street/i)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /identify & fill/i }));
 
     await waitFor(() => {
       expect(sendMessage).toHaveBeenCalledWith({
         type: MESSAGE_TYPES.RUN_AUTOFILL,
         profileOptionId: "profile-1"
+      });
+    });
+  });
+
+  it("uses a pasted profile override when provided", async () => {
+    sendMessage.mockImplementation((message) => {
+      if (message.type === MESSAGE_TYPES.GET_SETTINGS) {
+        return Promise.resolve({ settings: { savedProfiles: [] } });
+      }
+
+      return Promise.resolve({ mode: "preview", profile, fields, mappings });
+    });
+
+    render(<PopupApp />);
+    fireEvent.change(await screen.findByLabelText(/paste profile json/i), {
+      target: { value: JSON.stringify(profile) }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /identify & fill/i }));
+
+    await waitFor(() => {
+      expect(sendMessage).toHaveBeenCalledWith({
+        type: MESSAGE_TYPES.RUN_AUTOFILL,
+        profileOverride: profile
       });
     });
   });

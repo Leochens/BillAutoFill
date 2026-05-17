@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { COUNTRY_DEFINITIONS } from "../shared/countries";
 import { MESSAGE_TYPES } from "../shared/messages";
 import { DEFAULT_SETTINGS, SETTINGS_KEY, loadSettings, saveSettings } from "../shared/storage";
-import type { CountryCode, ExtensionSettings, GenderPreference, ProviderKind } from "../shared/types";
+import type {
+  BillingProfile,
+  CountryCode,
+  ExtensionSettings,
+  GenderPreference,
+  GeneratedProfileOption,
+  ProviderKind
+} from "../shared/types";
 
 function trustedDomainsText(domains: string[]): string {
   return domains.join("\n");
@@ -17,6 +24,7 @@ function parseTrustedDomains(value: string): string[] {
 
 export function OptionsApp() {
   const [settings, setSettings] = useState<ExtensionSettings>(DEFAULT_SETTINGS);
+  const [manualProfileText, setManualProfileText] = useState(profileJsonExample());
   const [status, setStatus] = useState("Settings are stored locally in this browser extension.");
 
   useEffect(() => {
@@ -74,6 +82,30 @@ export function OptionsApp() {
 
     setSettings(response.settings);
     setStatus(`Generated ${response.profiles?.length ?? 0} address options.`);
+  }
+
+  async function addManualProfile() {
+    try {
+      const profile = parseProfileText(manualProfileText);
+      const option: GeneratedProfileOption = {
+        id: `manual-${Date.now()}`,
+        label: profileLabel(profile),
+        profile,
+        createdAt: new Date().toISOString(),
+        source: "local"
+      };
+      const nextSettings = {
+        ...settings,
+        savedProfiles: [option, ...settings.savedProfiles],
+        selectedProfileId: option.id
+      };
+
+      setSettings(nextSettings);
+      await saveSettings(nextSettings);
+      setStatus("Manual profile added.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Could not add manual profile.");
+    }
   }
 
   return (
@@ -207,14 +239,25 @@ export function OptionsApp() {
             Use AI to pre-generate reusable fictional addresses, then choose one from the popup when filling a form.
           </p>
           <button type="button" className="secondary-action" onClick={generateAddressOptions}>
-            Generate address options
+            Generate with AI
+          </button>
+          <label className="compact-label">
+            Add profile manually
+            <textarea
+              rows={9}
+              value={manualProfileText}
+              onChange={(event) => setManualProfileText(event.target.value)}
+            />
+          </label>
+          <button type="button" className="secondary-action" onClick={addManualProfile}>
+            Add manual profile
           </button>
           {settings.savedProfiles.length > 0 ? (
             <ul className="saved-profile-list">
               {settings.savedProfiles.map((profile) => (
                 <li key={profile.id}>
                   <span>{profile.label}</span>
-                  <small>{profile.source === "ai" ? "AI" : "Local fallback"}</small>
+                  <small>{profile.source === "ai" ? "AI" : "Manual"}</small>
                 </li>
               ))}
             </ul>
@@ -240,4 +283,65 @@ export function OptionsApp() {
       </section>
     </main>
   );
+}
+
+function profileLabel(profile: BillingProfile): string {
+  return `${profile.givenName} ${profile.familyName} - ${profile.city}, ${profile.regionCode}`;
+}
+
+function parseProfileText(text: string): BillingProfile {
+  const parsed = JSON.parse(text.trim()) as { profile?: unknown } | unknown;
+  const candidate = typeof parsed === "object" && parsed !== null && "profile" in parsed
+    ? (parsed as { profile?: unknown }).profile
+    : parsed;
+  return coerceProfile(candidate);
+}
+
+function coerceProfile(value: unknown): BillingProfile {
+  if (typeof value !== "object" || value === null) {
+    throw new Error("Profile must be a JSON object.");
+  }
+
+  const profile = value as Partial<BillingProfile>;
+  const required: Array<keyof BillingProfile> = [
+    "givenName",
+    "familyName",
+    "gender",
+    "streetLine1",
+    "city",
+    "region",
+    "regionCode",
+    "postalCode",
+    "country",
+    "countryCode",
+    "phone",
+    "email"
+  ];
+  const missing = required.filter((field) => !profile[field]);
+  if (missing.length > 0) {
+    throw new Error(`Missing profile fields: ${missing.join(", ")}.`);
+  }
+  if (!COUNTRY_DEFINITIONS[profile.countryCode as BillingProfile["countryCode"]]) {
+    throw new Error("countryCode is not supported.");
+  }
+
+  return profile as BillingProfile;
+}
+
+function profileJsonExample(): string {
+  return JSON.stringify({
+    givenName: "Alex",
+    familyName: "Bennett",
+    gender: "neutral",
+    streetLine1: "123 Maple Street",
+    city: "Portland",
+    region: "Oregon",
+    regionCode: "OR",
+    postalCode: "97201",
+    country: "United States",
+    countryCode: "US",
+    phone: "+1 555 123 4567",
+    email: "alex.bennett@example.test",
+    company: "Northstar Labs"
+  }, null, 2);
 }

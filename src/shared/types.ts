@@ -90,5 +90,5 @@ export interface FieldMapping {
 
 export interface MappingValidationResult {
   validMappings: FieldMapping[];
-  rejectedMappings: Array<FieldMapping & { reason: string }>;
+  rejectedMappings: Array<Partial<FieldMapping> & { reason: string }>;
 }

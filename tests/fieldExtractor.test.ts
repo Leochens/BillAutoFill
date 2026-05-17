@@ -42,6 +42,35 @@ describe("extractFieldsFromDocument", () => {
     expect(fields[0].nearbyText).not.toContain("private text");
   });
 
+  it("does not include nested safe-text exclusion descendants in labels or nearby text", () => {
+    document.body.innerHTML = `
+      <form>
+        <label>
+          Shipping Recipient
+          <input id="private-input" type="hidden" value="Private Input" />
+          <select id="private-select" style="display: none;">
+            <option>Private Option</option>
+          </select>
+          <span contenteditable="true">Private Editable</span>
+          <input id="recipient" name="recipient" />
+        </label>
+      </form>
+    `;
+
+    const fields = extractFieldsFromDocument(document);
+    const serializedSnapshots = JSON.stringify(fields);
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]).toMatchObject({
+      id: "recipient",
+      label: "Shipping Recipient",
+      nearbyText: "Shipping Recipient"
+    });
+    expect(serializedSnapshots).not.toContain("Private Input");
+    expect(serializedSnapshots).not.toContain("Private Option");
+    expect(serializedSnapshots).not.toContain("Private Editable");
+  });
+
   it("does not include sibling control content in nearby text", () => {
     document.body.innerHTML = `
       <form>

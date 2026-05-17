@@ -92,3 +92,21 @@ export interface MappingValidationResult {
   validMappings: FieldMapping[];
   rejectedMappings: Array<Partial<FieldMapping> & { reason: string }>;
 }
+
+export type ProviderKind = "openai" | "deepseek" | "gemini" | "custom";
+
+export interface ProviderSettings {
+  provider: ProviderKind;
+  apiKey: string;
+  model: string;
+  baseUrl?: string;
+}
+
+export interface ExtensionSettings {
+  provider: ProviderSettings;
+  countryCode: CountryCode;
+  gender: GenderPreference;
+  preferTaxExemptState: boolean;
+  trustedDomains: string[];
+  fillMode: "preview" | "oneClickTrusted";
+}

@@ -80,3 +80,15 @@ export interface FieldSnapshot {
   nearbyText?: string;
   options?: string[];
 }
+
+export interface FieldMapping {
+  fieldId: string;
+  target: FieldKind;
+  confidence: number;
+  note?: string;
+}
+
+export interface MappingValidationResult {
+  validMappings: FieldMapping[];
+  rejectedMappings: Array<FieldMapping & { reason: string }>;
+}

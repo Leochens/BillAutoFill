@@ -1,4 +1,23 @@
-.superpowers/
+.DS_Store
+
+# Local dependencies and generated output
 node_modules/
 dist/
-.DS_Store
+coverage/
+*.tsbuildinfo
+
+# Local extension packages
+*.zip
+*.crx
+*.pem
+
+# Local environment and editor files
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+
+# Local agent/workflow scratch files
+.superpowers/
+docs/superpowers/

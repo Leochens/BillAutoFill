@@ -6,7 +6,7 @@ import type { FieldSnapshot } from "../src/shared/types";
 describe("buildProviderRequest", () => {
   it("builds an OpenAI chat completion request without field values", () => {
     const request = buildProviderRequest(
-      { provider: "openai", apiKey: "sk-test", model: "gpt-4.1-mini" },
+      { provider: "openai", apiKey: "test-openai-key", model: "gpt-4.1-mini" },
       [
         {
           fieldId: "field-0",
@@ -52,7 +52,7 @@ describe("buildProviderRequest", () => {
 
   it("builds a fictional profile options request", () => {
     const request = buildProfileOptionsRequest(
-      { provider: "openai", apiKey: "sk-test", model: "gpt-4.1-mini" },
+      { provider: "openai", apiKey: "test-openai-key", model: "gpt-4.1-mini" },
       { countryCode: "US", gender: "neutral", preferTaxExemptState: true },
       4
     );

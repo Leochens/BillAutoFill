@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Bill AutoFill icon">
-  <rect width="128" height="128" rx="28" fill="#1f6f68" />
-  <path d="M38 28h52a10 10 0 0 1 10 10v52a10 10 0 0 1-10 10H38a10 10 0 0 1-10-10V38a10 10 0 0 1 10-10Z" fill="#f7f3e8" />
-  <path d="M45 49h38M45 65h38M45 81h24" stroke="#1f6f68" stroke-width="8" stroke-linecap="round" />
-  <path d="m78 80 10 10 20-24" fill="none" stroke="#d84f37" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" />
-</svg>

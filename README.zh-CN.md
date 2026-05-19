@@ -2,6 +2,8 @@
 
 简体中文 | [English](./README.md)
 
+![Bill AutoFill 宣传图](./docs/assets/showcase-zh.png)
+
 Bill AutoFill 是一个开源的 Chrome Manifest V3 浏览器扩展，用于生成虚拟账单资料，并辅助填写测试表单。它适合 QA、演示、沙盒表单、本地测试和隐私友好的测试数据工作流。
 
 它不会自动提交表单，也不适用于真实购物、冒充他人、规避税费、填写银行卡、填写密码或处理政府证件信息。

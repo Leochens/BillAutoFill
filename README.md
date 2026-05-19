@@ -2,6 +2,8 @@
 
 [简体中文](./README.zh-CN.md) | English
 
+![Bill AutoFill showcase](./docs/assets/showcase-en.png)
+
 Bill AutoFill is an open-source Chrome Manifest V3 extension for generating fictional billing profiles and filling test forms. It is intended for QA, demos, sandbox forms, and privacy-preserving test workflows.
 
 It does not submit forms automatically and is not intended for real purchases, impersonation, tax avoidance, payment-card filling, password filling, or government-ID workflows.

@@ -2,6 +2,8 @@
 
 简体中文 | [English](./README.md)
 
+[![GuanTou Lab](https://world.guantou.site/badge.svg?theme=dark&accent=red&lang=zh&size=sm)](https://world.guantou.site/)
+
 ![Bill AutoFill 宣传图](./docs/assets/showcase-zh.png)
 
 Bill AutoFill 是一个开源的 Chrome Manifest V3 浏览器扩展，用于生成虚拟账单资料，并辅助填写测试表单。它适合 QA、演示、沙盒表单、本地测试和隐私友好的测试数据工作流。

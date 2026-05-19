@@ -2,6 +2,8 @@
 
 [简体中文](./README.zh-CN.md) | English
 
+[![GuanTou Lab](https://world.guantou.site/badge.svg?theme=dark&accent=red&lang=en&size=sm)](https://world.guantou.site/)
+
 ![Bill AutoFill showcase](./docs/assets/showcase-en.png)
 
 Bill AutoFill is an open-source Chrome Manifest V3 extension for generating fictional billing profiles and filling test forms. It is intended for QA, demos, sandbox forms, and privacy-preserving test workflows.

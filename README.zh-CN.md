@@ -36,6 +36,17 @@ Bill AutoFill 是 local-first 设计，不包含开发者后台服务。
 
 更多细节见 [PRIVACY.md](./PRIVACY.md)。
 
+## 从 Release 安装
+
+1. 在最新的 GitHub Release 中下载 `bill-autofill-v0.1.0.zip`。
+2. 解压到本地文件夹。
+3. 打开 `chrome://extensions`。
+4. 开启 Developer mode。
+5. 点击 Load unpacked。
+6. 选择刚刚解压出来的扩展文件夹。
+
+安装完成后，点击 Bill AutoFill 扩展图标打开侧边栏。第一次在某个站点填充时，扩展会先请求当前站点权限，然后再读取和填写表单字段。
+
 ## 从源码安装
 
 ```bash
@@ -49,6 +60,14 @@ npm run build
 2. 开启 Developer mode。
 3. 点击 Load unpacked。
 4. 选择生成出来的 `dist/` 目录。
+
+如果要在本地生成 release 包：
+
+```bash
+npm run package
+```
+
+它会生成带版本号的 zip 文件，例如 `bill-autofill-v0.1.0.zip`。
 
 ## 开发
 

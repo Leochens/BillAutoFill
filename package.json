@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "package": "rm -f bill-autofill.zip && npm run build && cd dist && zip -qr ../bill-autofill.zip .",
+    "package": "rm -f bill-autofill-v*.zip && npm run build && VERSION=$(node -p \"require('./package.json').version\") && cd dist && zip -qr ../bill-autofill-v$VERSION.zip .",
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview --host 127.0.0.1"

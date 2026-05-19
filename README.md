@@ -33,6 +33,17 @@ Bill AutoFill is local-first and does not include a developer backend.
 
 See [PRIVACY.md](./PRIVACY.md) for more detail.
 
+## Install From Release
+
+1. Download `bill-autofill-v0.1.0.zip` from the latest GitHub Release.
+2. Unzip it to a local folder.
+3. Open `chrome://extensions`.
+4. Enable Developer mode.
+5. Click Load unpacked.
+6. Select the unzipped extension folder.
+
+After installation, click the Bill AutoFill extension icon to open the side panel. The first fill on a site asks for current-site permission before reading or filling form fields.
+
 ## Install From Source
 
 ```bash
@@ -46,6 +57,14 @@ Then:
 2. Enable Developer mode.
 3. Click Load unpacked.
 4. Select the generated `dist/` directory.
+
+To create a local release package:
+
+```bash
+npm run package
+```
+
+This generates a versioned zip file such as `bill-autofill-v0.1.0.zip`.
 
 ## Development
 
